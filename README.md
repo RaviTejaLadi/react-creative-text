@@ -1,7 +1,7 @@
 # React Creative Text
 
 <div align="center">
-  <img src="./src/assets/banner.png" alt="React Creative Text Banner" width="100%" height="220px" style="object-fit: cover; border-radius: 10px;" />
+  <img src="./src/assets/banner.png" alt="React Creative Text Banner" width="100%" style="object-fit: cover; border-radius: 10px;" />
   
 
   [![npm version](https://badge.fury.io/js/react-creative-text.svg)](https://badge.fury.io/js/react-creative-text)
@@ -117,21 +117,58 @@ function App() {
   FIRE
 </CreativeText>
 ```
+### Advanced usage
+```jsx
+<CreativeText
+  fontFamily="Fredoka One"
+  fontSize="96px"
+  gradient={{
+    colors: ['#ff6b6b', '#4ecdc4', '#45b7d1'],
+    direction: 'diagonal'
+  }}
+  shadow={{
+    offsetX: 8,
+    offsetY: 8,
+    blur: 4,
+    color: 'rgba(0,0,0,0.3)'
+  }}
+  animation="slide"
+  rotation={-5}
+  onFontLoad={() => console.log('Font loaded!')}
+>
+  Creative Text
+</CreativeText>
+```
 
 ## 📋 API Reference
 
 ### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `string` | **Required** | The text content to display |
-| `fontFamily` | `string` | `"Pacifico"` | Google Font family name |
-| `fontSize` | `number \| string` | `"72px"` | Size of the text (CSS units) |
-| `color` | `string` | `"white"` | Fill color of the text |
-| `strokeColor` | `string` | `"black"` | Stroke/outline color |
-| `strokeWidth` | `number` | `8` | Width of the text stroke in pixels |
-| `shadow` | `boolean` | `true` | Whether to apply drop shadow |
-| `className` | `string` | `""` | Additional CSS classes |
+| Prop            | Type                                                                 | Default                | Description                                    |
+|-----------------|----------------------------------------------------------------------|------------------------|------------------------------------------------|
+| `children`      | `string`                                                            | **Required**           | The text content to display                    |
+| `fontFamily`    | `GoogleFontFamily`                                                  | `"Pacifico"`           | Google Font family name                        |
+| `fontSize`      | `number \| string`                                                  | `"72px"`               | Size of the text (CSS units or number)         |
+| `color`         | `string`                                                            | `"white"`              | Fill color of the text                         |
+| `strokeColor`   | `string`                                                            | `"black"`              | Stroke/outline color                           |
+| `strokeWidth`   | `number`                                                            | `8`                    | Width of the text stroke in pixels             |
+| `shadow`        | `boolean \| { offsetX?: number; offsetY?: number; blur?: number; color?: string; opacity?: number; }` | `true`                 | Drop shadow settings or toggle                 |
+| `gradient`      | `{ colors: string[]; direction?: 'horizontal' \| 'vertical' \| 'diagonal'; }` | `undefined`            | Gradient fill with optional direction          |
+| `animation`     | `'none' \| 'fade' \| 'slide' \| 'bounce' \| 'glow'`                 | `'none'`               | Animation type applied to text                 |
+| `responsive`    | `boolean`                                                           | `false`                | Makes text responsive to container width       |
+| `maxWidth`      | `number \| string`                                                  | `undefined`            | Maximum width of text block                    |
+| `className`     | `string`                                                            | `""`                   | Additional CSS classes                         |
+| `style`         | `React.CSSProperties`                                               | `undefined`            | Inline styles                                  |
+| `onFontLoad`    | `() => void`                                                        | `undefined`            | Callback fired when font is successfully loaded|
+| `onFontError`   | `(error: unknown) => void`                                          | `undefined`            | Callback fired when font fails to load         |
+| `fallbackFont`  | `string`                                                            | `"sans-serif"`         | Fallback font if Google font fails             |
+| `letterSpacing` | `number \| string`                                                  | `0`                    | Spacing between letters                        |
+| `lineHeight`    | `number \| string`                                                  | `normal`               | Line height for multi-line text                |
+| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'`              | `'none'`               | Text transformation style                      |
+| `opacity`       | `number`                                                            | `1`                    | Opacity value between 0 and 1                  |
+| `rotation`      | `number`                                                            | `0`                    | Rotation angle in degrees                      |
+| `skew`          | `{ x?: number; y?: number; }`                                       | `{ x: 0, y: 0 }`       | Skew transformation values                     |
+
 
 ### TypeScript Interface
 

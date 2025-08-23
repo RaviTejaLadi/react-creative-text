@@ -1,7 +1,7 @@
 {
   "name": "react-creative-text",
   "description": "A powerful React component for creating beautiful, customizable text with SVG. Support for Google Fonts, strokes, shadows, and more.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "license": "MIT",
   "files": [

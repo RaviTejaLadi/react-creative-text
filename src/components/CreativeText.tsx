@@ -88,8 +88,8 @@ const CreativeText: React.FC<CreativeTextProps> = ({
   const [textLines, setTextLines] = useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Memoize processed props
   const processedFontSize = useMemo(() => {
     if (typeof fontSize === 'number') return `${fontSize}px`;
     return fontSize;
@@ -105,13 +105,11 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     return letterSpacing;
   }, [letterSpacing]);
 
-  // Get numeric font size
   const numericFontSize = useMemo(() => {
     const match = processedFontSize.match(/(\d+)/);
     return match ? parseInt(match[1]) : 72;
   }, [processedFontSize]);
 
-  // Generate unique IDs for gradients and filters
   const gradientId = useMemo(
     () => `gradient-${Math.random().toString(36).substr(2, 9)}`,
     []
@@ -121,82 +119,52 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     []
   );
 
-  // More robust text measurement using multiple methods
   const measureText = useCallback(
     (text: string, font: string): { width: number; height: number } => {
-      // Method 1: Canvas measurement (most accurate)
       try {
         if (!canvasRef.current) {
           canvasRef.current = document.createElement('canvas');
         }
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
-
         if (ctx) {
-          // Set font with fallback
           ctx.font = `${processedFontSize} "${font}", ${fallbackFont}`;
           const metrics = ctx.measureText(text);
           const width = metrics.width;
-
-          // Calculate height using font metrics if available
           const height =
             metrics.actualBoundingBoxAscent +
-              metrics.actualBoundingBoxDescent ||
-            metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent ||
-            numericFontSize;
-
+              metrics.actualBoundingBoxDescent || numericFontSize;
           if (width > 0 && height > 0) {
             return { width: Math.ceil(width), height: Math.ceil(height) };
           }
         }
-      } catch {
-        console.warn('Canvas measurement failed, falling back to DOM method');
+      } catch (error) {
+        console.error(error);
       }
-
-      // Method 2: DOM measurement (fallback)
-      try {
-        const span = document.createElement('span');
-        span.style.cssText = `
-          font: ${processedFontSize} "${font}", ${fallbackFont};
-          visibility: hidden;
-          position: absolute;
-          top: -9999px;
-          left: -9999px;
-          white-space: nowrap;
-          letter-spacing: ${processedLetterSpacing};
-          line-height: 1;
-          display: inline-block;
-        `;
-        span.textContent = text || 'M'; // Use 'M' as fallback for empty text
-
-        document.body.appendChild(span);
-        const rect = span.getBoundingClientRect();
-        const width = rect.width || span.offsetWidth || span.scrollWidth;
-        const height = rect.height || span.offsetHeight || span.scrollHeight;
-        document.body.removeChild(span);
-
-        return {
-          width: Math.ceil(width) || text.length * numericFontSize * 0.6,
-          height: Math.ceil(height) || numericFontSize,
-        };
-      } catch {
-        console.warn('DOM measurement failed, using estimation');
-      }
-
-      // Method 3: Estimation (last resort)
+      // Fallback DOM measurement
+      const span = document.createElement('span');
+      span.style.cssText = `
+        font: ${processedFontSize} "${font}", ${fallbackFont};
+        visibility: hidden; position: absolute; top: -9999px; left: -9999px;
+        white-space: nowrap; letter-spacing: ${processedLetterSpacing};
+      `;
+      span.textContent = text || 'M';
+      document.body.appendChild(span);
+      const rect = span.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      document.body.removeChild(span);
       return {
-        width: Math.ceil(text.length * numericFontSize * 0.6),
-        height: numericFontSize,
+        width: Math.ceil(width) || text.length * numericFontSize * 0.6,
+        height: Math.ceil(height) || numericFontSize,
       };
     },
     [processedFontSize, fallbackFont, processedLetterSpacing, numericFontSize]
   );
 
-  // Enhanced line breaking with better word handling
   const breakTextIntoLines = useCallback(
     (text: string, maxLineWidth: number, font: string) => {
       if (!text || !text.trim()) return [''];
-
       const words = text.trim().split(/\s+/);
       const lines: string[] = [];
       let currentLine = '';
@@ -205,23 +173,17 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         const word = words[i];
         const testLine = currentLine ? `${currentLine} ${word}` : word;
         const { width } = measureText(testLine, font);
-
         if (width > maxLineWidth && currentLine) {
-          // Current line is full, start a new line
           lines.push(currentLine);
           currentLine = word;
 
-          // Check if single word is too long
           const wordWidth = measureText(word, font).width;
           if (wordWidth > maxLineWidth && word.length > 1) {
-            // Break long words
             const chars = word.split('');
             let partialWord = '';
-
             for (const char of chars) {
               const testPartial = partialWord + char;
               const partialWidth = measureText(testPartial + '-', font).width;
-
               if (partialWidth > maxLineWidth && partialWord) {
                 lines.push(partialWord + '-');
                 partialWord = char;
@@ -229,54 +191,39 @@ const CreativeText: React.FC<CreativeTextProps> = ({
                 partialWord = testPartial;
               }
             }
-
-            if (partialWord) {
-              currentLine = partialWord;
-            }
+            if (partialWord) currentLine = partialWord;
           }
         } else {
           currentLine = testLine;
         }
       }
-
-      if (currentLine) {
-        lines.push(currentLine);
-      }
-
+      if (currentLine) lines.push(currentLine);
       return lines.length > 0 ? lines : [''];
     },
     [measureText]
   );
 
-  // Enhanced layout calculation with better defaults
   const calculateLayout = useCallback(
     (text: string, font: string) => {
       const padding = Math.max(strokeWidth * 4, 20) + 40;
       const minWidth = 300;
 
-      // Determine maximum line width with better defaults
-      let maxLineWidth: number;
-
+      let containerWidth = 0;
       if (processedMaxWidth) {
-        const numMaxWidth =
+        containerWidth =
           typeof processedMaxWidth === 'string'
             ? parseInt(processedMaxWidth) || 800
-            : processedMaxWidth;
-        maxLineWidth = Math.max(numMaxWidth - padding, minWidth);
+            : (processedMaxWidth as number);
+      } else if (containerRef.current) {
+        containerWidth = containerRef.current.offsetWidth || 800;
       } else {
-        // Calculate based on text content and font size
-        const singleLineWidth = measureText(text, font).width;
-        const idealMaxWidth = Math.min(
-          singleLineWidth + padding,
-          numericFontSize * 20
-        );
-        maxLineWidth = Math.max(idealMaxWidth, minWidth);
+        containerWidth = 800;
       }
 
-      // Break text into lines
+      const maxLineWidth = Math.max(containerWidth - padding, minWidth);
+
       const lines = breakTextIntoLines(text, maxLineWidth, font);
 
-      // Calculate actual dimensions
       let maxWidth = 0;
       let totalHeight = 0;
       const lineHeights: number[] = [];
@@ -285,12 +232,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         const { width, height } = measureText(line || ' ', font);
         maxWidth = Math.max(maxWidth, width);
         lineHeights.push(height);
-
-        if (index === 0) {
-          totalHeight += height;
-        } else {
-          totalHeight += height * Number(lineHeight);
-        }
+        totalHeight += index === 0 ? height : height * Number(lineHeight);
       });
 
       const finalWidth = Math.max(maxWidth + padding, minWidth);
@@ -316,16 +258,13 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     ]
   );
 
-  // Load Google font with better error handling
   useEffect(() => {
     if (!fontFamily) {
       setFontLoaded(true);
       return;
     }
-
     const loadFont = async () => {
       try {
-        // Check if font is already loaded
         if (document.fonts && document.fonts.check) {
           const fontString = `${numericFontSize}px "${fontFamily}"`;
           if (document.fonts.check(fontString)) {
@@ -335,7 +274,6 @@ const CreativeText: React.FC<CreativeTextProps> = ({
             return;
           }
         }
-
         await new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             setFontError(true);
@@ -344,9 +282,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
           }, 15000);
 
           WebFont.load({
-            google: {
-              families: [fontFamily],
-            },
+            google: { families: [fontFamily] },
             active: () => {
               clearTimeout(timeout);
               setFontLoaded(true);
@@ -368,25 +304,17 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         onFontError?.(error);
       }
     };
-
     loadFont();
   }, [fontFamily, onFontLoad, onFontError, numericFontSize]);
 
-  // Update layout when content or font changes
   useEffect(() => {
     const updateLayout = () => {
       const effectiveFont = fontError ? fallbackFont : fontFamily;
       const layout = calculateLayout(children, effectiveFont || fallbackFont);
-
       setTextLines(layout.lines);
-      setTextDimensions({
-        width: layout.width,
-        height: layout.height,
-      });
+      setTextDimensions({ width: layout.width, height: layout.height });
       setIsReady(true);
     };
-
-    // Wait a bit for DOM to be ready and fonts to load
     if (fontLoaded || fontError) {
       const timer = setTimeout(updateLayout, 100);
       return () => clearTimeout(timer);
@@ -400,20 +328,15 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     calculateLayout,
   ]);
 
-  // Also trigger layout recalculation on window resize
   useEffect(() => {
     const handleResize = () => {
       if (isReady && responsive) {
         const effectiveFont = fontError ? fallbackFont : fontFamily;
         const layout = calculateLayout(children, effectiveFont || fallbackFont);
         setTextLines(layout.lines);
-        setTextDimensions({
-          width: layout.width,
-          height: layout.height,
-        });
+        setTextDimensions({ width: layout.width, height: layout.height });
       }
     };
-
     if (responsive) {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
@@ -428,53 +351,36 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     calculateLayout,
   ]);
 
-  // Generate gradient definition
   const renderGradient = () => {
     if (!gradient) return null;
-
     const { colors, direction = 'horizontal' } = gradient;
-    let x1 = '0%',
-      y1 = '0%',
-      x2 = '100%',
+    const x1 = '0%',
+      y1 = '0%';
+    let x2 = '100%',
       y2 = '0%';
-
-    switch (direction) {
-      case 'vertical':
-        x1 = '0%';
-        y1 = '0%';
-        x2 = '0%';
-        y2 = '100%';
-        break;
-      case 'diagonal':
-        x1 = '0%';
-        y1 = '0%';
-        x2 = '100%';
-        y2 = '100%';
-        break;
-      default: // horizontal
-        x1 = '0%';
-        y1 = '0%';
-        x2 = '100%';
-        y2 = '0%';
+    if (direction === 'vertical') {
+      x2 = '0%';
+      y2 = '100%';
     }
-
+    if (direction === 'diagonal') {
+      x2 = '100%';
+      y2 = '100%';
+    }
     return (
       <linearGradient id={gradientId} x1={x1} y1={y1} x2={x2} y2={y2}>
-        {colors.map((color, index) => (
+        {colors.map((c, i) => (
           <stop
-            key={index}
-            offset={`${(index / (colors.length - 1)) * 100}%`}
-            stopColor={color}
+            key={i}
+            offset={`${(i / (colors.length - 1)) * 100}%`}
+            stopColor={c}
           />
         ))}
       </linearGradient>
     );
   };
 
-  // Generate shadow/filter definition
   const renderFilter = () => {
     if (!shadow) return null;
-
     const shadowConfig =
       typeof shadow === 'boolean'
         ? {
@@ -491,7 +397,6 @@ const CreativeText: React.FC<CreativeTextProps> = ({
             color: shadow.color ?? 'rgba(0,0,0,0.9)',
             opacity: shadow.opacity ?? 1,
           };
-
     return (
       <filter id={filterId} x="-50%" y="-50%" width="200%" height="200%">
         <feDropShadow
@@ -505,7 +410,6 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     );
   };
 
-  // Generate animation class
   const getAnimationClass = () => {
     switch (animation) {
       case 'fade':
@@ -521,28 +425,21 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     }
   };
 
-  // Generate transform string
   const getTransform = () => {
     const transforms = [];
-    if (rotation !== 0) transforms.push(`rotate(${rotation}deg)`);
-    if (skew.x !== 0) transforms.push(`skewX(${skew.x}deg)`);
-    if (skew.y !== 0) transforms.push(`skewY(${skew.y}deg)`);
+    if (rotation) transforms.push(`rotate(${rotation}deg)`);
+    if (skew.x) transforms.push(`skewX(${skew.x}deg)`);
+    if (skew.y) transforms.push(`skewY(${skew.y}deg)`);
     return transforms.length > 0 ? transforms.join(' ') : undefined;
   };
 
-  // Calculate Y position for each line
-  const getLineY = (lineIndex: number, totalLines: number) => {
-    if (totalLines === 1) {
-      return '50%';
-    }
-
-    const lineHeightPixels = numericFontSize * Number(lineHeight);
-    const totalTextHeight =
-      (totalLines - 1) * lineHeightPixels + numericFontSize;
+  const getLineY = (index: number, total: number) => {
+    if (total === 1) return '50%';
+    const lineHeightPx = numericFontSize * Number(lineHeight);
+    const totalTextHeight = (total - 1) * lineHeightPx + numericFontSize;
     const startY =
       (textDimensions.height - totalTextHeight) / 2 + numericFontSize * 0.8;
-    const y = startY + lineIndex * lineHeightPixels;
-
+    const y = startY + index * lineHeightPx;
     return `${(y / textDimensions.height) * 100}%`;
   };
 
@@ -554,24 +451,23 @@ const CreativeText: React.FC<CreativeTextProps> = ({
   const fillColor = gradient ? `url(#${gradientId})` : color;
   const filterValue = shadow ? `url(#${filterId})` : undefined;
 
-  // Don't render until layout is calculated
   if (!isReady) {
     return (
       <div
+        ref={containerRef}
         className={cn('creative-text-container', className)}
         style={{
           width: processedMaxWidth || 'auto',
           height: numericFontSize * 1.5,
           ...style,
         }}
-      >
-        {/* Placeholder while calculating layout */}
-      </div>
+      ></div>
     );
   }
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         'creative-text-container',
         responsive && 'w-full',
@@ -590,22 +486,17 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         viewBox={`0 0 ${textDimensions.width} ${textDimensions.height}`}
         preserveAspectRatio="xMidYMid meet"
         className={cn(responsive ? 'w-full h-auto' : 'w-auto h-auto')}
-        style={{
-          maxWidth: '100%',
-          height: 'auto',
-          display: 'block',
-        }}
+        style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
       >
         <defs>
           {renderGradient()}
           {renderFilter()}
         </defs>
-
-        {textLines.map((line, index) => (
+        {textLines.map((line, i) => (
           <text
-            key={`${index}-${line}`}
+            key={`${i}-${line}`}
             x="50%"
-            y={getLineY(index, textLines.length)}
+            y={getLineY(i, textLines.length)}
             dominantBaseline="middle"
             textAnchor="middle"
             fontFamily={effectiveFontFamily}
@@ -618,10 +509,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
             paintOrder="stroke fill"
             letterSpacing={processedLetterSpacing}
             filter={filterValue}
-            style={{
-              fontWeight: 'normal',
-              userSelect: 'none',
-            }}
+            style={{ fontWeight: 'normal', userSelect: 'none' }}
           >
             {line}
           </text>

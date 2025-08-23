@@ -1,13 +1,15 @@
 import { GoogleFontFamily } from '@/constants/googleFontFamilies';
 import { cn } from '@/utils';
-import React, {
-  useEffect,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import WebFont from 'webfontloader';
+
+export type DirectionType = 'horizontal' | 'vertical' | 'diagonal';
+export type AnimationType = 'none' | 'fade' | 'slide' | 'bounce' | 'glow';
+export type TextTransformType =
+  | 'none'
+  | 'uppercase'
+  | 'lowercase'
+  | 'capitalize';
 
 export interface CreativeTextProps {
   children: string;
@@ -27,9 +29,9 @@ export interface CreativeTextProps {
       };
   gradient?: {
     colors: string[];
-    direction?: 'horizontal' | 'vertical' | 'diagonal';
+    direction?: DirectionType;
   };
-  animation?: 'none' | 'fade' | 'slide' | 'bounce' | 'glow';
+  animation?: AnimationType;
   responsive?: boolean;
   maxWidth?: number | string;
   className?: string;
@@ -39,7 +41,7 @@ export interface CreativeTextProps {
   fallbackFont?: string;
   letterSpacing?: number | string;
   lineHeight?: number | string;
-  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  textTransform?: TextTransformType;
   opacity?: number;
   rotation?: number;
   skew?: {
@@ -78,7 +80,6 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     height: 300,
   });
   const [textLines, setTextLines] = useState<string[]>([]);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Memoize processed props
   const processedFontSize = useMemo(() => {
@@ -112,36 +113,26 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     []
   );
 
-  // Create a persistent canvas for text measurement
-  const getCanvas = useCallback(() => {
-    if (!canvasRef.current) {
-      canvasRef.current = document.createElement('canvas');
-    }
-    return canvasRef.current;
-  }, []);
-
   // More accurate text measurement
   const measureText = useCallback(
     (text: string, font: string) => {
-      const canvas = getCanvas();
-      const context = canvas.getContext('2d');
-      if (!context) return { width: 0, height: numericFontSize };
+      // Use a temporary span for measurement instead of canvas
+      // This works better in packaged environments
+      const span = document.createElement('span');
+      span.style.font = `${processedFontSize} "${font}", ${fallbackFont}`;
+      span.style.visibility = 'hidden';
+      span.style.position = 'absolute';
+      span.style.whiteSpace = 'nowrap';
+      span.textContent = text;
 
-      // Set font with proper formatting
-      const fontStyle = `${processedFontSize} "${font}", ${fallbackFont}`;
-      context.font = fontStyle;
-
-      const metrics = context.measureText(text);
-      const width = metrics.width;
-
-      // Calculate height more accurately
-      const height =
-        (metrics.actualBoundingBoxAscent || numericFontSize * 0.8) +
-        (metrics.actualBoundingBoxDescent || numericFontSize * 0.2);
+      document.body.appendChild(span);
+      const width = span.offsetWidth;
+      const height = span.offsetHeight;
+      document.body.removeChild(span);
 
       return { width, height };
     },
-    [processedFontSize, fallbackFont, numericFontSize, getCanvas]
+    [processedFontSize, fallbackFont]
   );
 
   // Smart line breaking based on actual text width
@@ -432,10 +423,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         xmlns="http://www.w3.org/2000/svg"
         viewBox={`0 0 ${textDimensions.width} ${textDimensions.height}`}
         preserveAspectRatio="xMidYMid meet"
-        className={cn(
-          'creative-text-svg',
-          responsive ? 'w-full h-auto' : 'w-auto h-auto'
-        )}
+        className={cn(responsive ? 'w-full h-auto' : 'w-auto h-auto')}
         style={{
           maxWidth: '100%',
           height: 'auto',

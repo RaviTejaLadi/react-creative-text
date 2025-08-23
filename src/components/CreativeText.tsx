@@ -1,3 +1,4 @@
+import { GoogleFontFamily } from '@/constants/googleFontFamilies';
 import { cn } from '@/utils';
 import React, {
   useEffect,
@@ -6,7 +7,6 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { GoogleFontFamily } from 'react-creative-text';
 import WebFont from 'webfontloader';
 
 export interface CreativeTextProps {

@@ -1,7 +1,8 @@
+import CreativeText from './components/CreativeText';
 import './index.css';
 
 // #region CreativeText
-export * from './components/CreativeText';
+export default CreativeText;
 
 export * from './types';
 

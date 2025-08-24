@@ -24,7 +24,6 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "npm run clean && rollup --bundleConfigAsCjs -c",
-    "dev": "vite",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

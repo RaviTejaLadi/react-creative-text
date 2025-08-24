@@ -56,7 +56,7 @@ export interface CreativeTextProps {
 const CreativeText: React.FC<CreativeTextProps> = ({
   children,
   fontFamily = 'Pacifico',
-  fontSize = '72px',
+  fontSize = '12px',
   color = 'white',
   strokeColor = 'black',
   strokeWidth = 8,

@@ -4,6 +4,6 @@ import './index.css';
 // #region CreativeText
 export default CreativeText;
 
-export * from './types';
+export * from './components/CreativeText';
 
 // #endregion CreativeText

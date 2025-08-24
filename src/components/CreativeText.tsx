@@ -1,5 +1,4 @@
 import { useSafeInstanceId } from '@/hooks/useSafeInstanceId';
-import { CreativeTextProps } from '@/types/creative-text-props';
 import { loadGoogleFontOnce } from '@/utils/load-font-once';
 import React, {
   useEffect,
@@ -8,6 +7,51 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { googleFontFamilies } from '@/constants/googleFontFamilies';
+
+export type GoogleFontFamily = (typeof googleFontFamilies)[number];
+export type DirectionType = 'horizontal' | 'vertical' | 'diagonal';
+export type AnimationType = 'none' | 'fade' | 'slide' | 'bounce' | 'glow';
+export type TextTransformType =
+  | 'none'
+  | 'uppercase'
+  | 'lowercase'
+  | 'capitalize';
+export interface CreativeTextProps {
+  children: string;
+  fontFamily?: GoogleFontFamily;
+  fontSize?: number | string;
+  color?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+  shadow?:
+    | boolean
+    | {
+        offsetX?: number;
+        offsetY?: number;
+        blur?: number;
+        color?: string;
+        opacity?: number;
+      };
+  gradient?: {
+    colors: string[];
+    direction?: DirectionType;
+  };
+  animation?: AnimationType;
+  responsive?: boolean;
+  maxWidth?: number | string;
+  className?: string;
+  style?: React.CSSProperties;
+  onFontLoad?: () => void;
+  onFontError?: (error: unknown) => void;
+  fallbackFont?: string;
+  letterSpacing?: number | string;
+  lineHeight?: number | string;
+  textTransform?: TextTransformType;
+  opacity?: number;
+  rotation?: number;
+  skew?: { x?: number; y?: number };
+}
 
 const CreativeText: React.FC<CreativeTextProps> = ({
   children,

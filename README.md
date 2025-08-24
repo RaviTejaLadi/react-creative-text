@@ -1,7 +1,7 @@
 # React Creative Text
 
 <div align="center">
-  <img src="./src/assets/banner.png" alt="React Creative Text Banner" width="100%" style="object-fit: cover; border-radius: 10px;" />
+  <img src="./src/assets/banner.png" alt="React Creative Text Banner" width="100%" style="object-fit: cover; border-radius: 1rem; margin-bottom: 1rem;" />
   
 
   [![npm version](https://badge.fury.io/js/react-creative-text.svg)](https://badge.fury.io/js/react-creative-text)

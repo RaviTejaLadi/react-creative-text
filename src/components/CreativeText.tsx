@@ -1,4 +1,4 @@
-import { GoogleFontFamily } from '@/constants/googleFontFamilies';
+import { googleFontFamilies } from '@/constants/googleFontFamilies';
 import { cn } from '@/utils';
 import React, {
   useEffect,
@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import WebFont from 'webfontloader';
 
+export type GoogleFontFamily = (typeof googleFontFamilies)[number];
 export type DirectionType = 'horizontal' | 'vertical' | 'diagonal';
 export type AnimationType = 'none' | 'fade' | 'slide' | 'bounce' | 'glow';
 export type TextTransformType =

@@ -1,5 +1,6 @@
-// fonts.tsx
-export const googleFontFamilies: string[] = [
+const makeFontFamilies = <T extends readonly string[]>(arr: T) => arr;
+
+export const googleFontFamilies = makeFontFamilies([
   'ABeeZee',
   'Abel',
   'Abhaya Libre',
@@ -1483,6 +1484,4 @@ export const googleFontFamilies: string[] = [
   'Zen Old Mincho',
   'Zen Tokyo Zoo',
   'Zeyada',
-] as const;
-
-export type GoogleFontFamily = (typeof googleFontFamilies)[number];
+]);

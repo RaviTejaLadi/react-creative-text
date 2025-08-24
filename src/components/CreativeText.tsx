@@ -1,5 +1,4 @@
 import { googleFontFamilies } from '@/constants/googleFontFamilies';
-import { cn } from '@/utils';
 import React, {
   useEffect,
   useState,
@@ -292,52 +291,32 @@ const CreativeText: React.FC<CreativeTextProps> = ({
       setFontLoaded(true);
       return;
     }
-    const loadFont = async () => {
+
+    const loadFont = () => {
       try {
-        if (document.fonts && document.fonts.check) {
-          const fontString = `${numericFontSize}px "${fontFamily}"`;
-          if (document.fonts.check(fontString)) {
+        WebFont.load({
+          google: {
+            families: [fontFamily],
+          },
+          active: () => {
             setFontLoaded(true);
             setFontError(false);
             onFontLoad?.();
-            return;
-          }
-        }
-
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
+          },
+          inactive: () => {
             setFontError(true);
-            onFontError?.(new Error(`Font loading timeout: ${fontFamily}`));
-            reject(new Error(`Font loading timeout: ${fontFamily}`));
-          }, 15000);
-
-          WebFont.load({
-            google: {
-              families: [fontFamily],
-            },
-            active: () => {
-              clearTimeout(timeout);
-              setFontLoaded(true);
-              setFontError(false);
-              onFontLoad?.();
-              resolve();
-            },
-            inactive: () => {
-              clearTimeout(timeout);
-              setFontError(true);
-              onFontError?.(new Error(`Failed to load font: ${fontFamily}`));
-              reject(new Error(`Failed to load font: ${fontFamily}`));
-            },
-            timeout: 15000,
-          });
+            onFontError?.(new Error(`Failed to load font: ${fontFamily}`));
+          },
+          timeout: 15000,
         });
       } catch (error) {
         setFontError(true);
         onFontError?.(error);
       }
     };
+
     loadFont();
-  }, [fontFamily, onFontLoad, onFontError, numericFontSize]);
+  }, [fontFamily, onFontLoad, onFontError]);
 
   // Update layout when content or font changes
   useEffect(() => {
@@ -513,6 +492,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     : fontLoaded
       ? fontFamily
       : fallbackFont;
+  console.log(effectiveFontFamily);
   const fillColor = gradient ? `url(#${gradientId})` : color;
   const filterValue = shadow ? `url(#${filterId})` : undefined;
 
@@ -525,7 +505,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
           height: numericFontSize * 1.5,
           ...style,
         }}
-        className={cn('creative-text-container', className)}
+        className={`creative-text-container ${className}`}
       >
         {/* Placeholder */}
       </div>
@@ -534,12 +514,13 @@ const CreativeText: React.FC<CreativeTextProps> = ({
 
   return (
     <div
-      className={cn('creative-text-container', getAnimationClass(), className)}
+      className={`creative-text-container ${getAnimationClass()} ${className}`}
       style={{
         maxWidth: processedMaxWidth || '100%',
         width: responsive ? '100%' : processedMaxWidth || textDimensions.width,
         transform: getTransform(),
         opacity,
+        fontFamily: `'${effectiveFontFamily}', ${fallbackFont}`,
         ...style,
       }}
     >
@@ -557,6 +538,11 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         <defs>
           {renderGradient()}
           {renderFilter()}
+          <style>
+            {`
+              @import url('https://fonts.googleapis.com/css2?family=${fontFamily.replace(/\s+/g, '+')}&display=swap');
+            `}
+          </style>
         </defs>
         {textLines.map((line, index) => (
           <text
@@ -565,7 +551,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
             y={getLineY(index, textLines.length)}
             dominantBaseline="middle"
             textAnchor="middle"
-            fontFamily={effectiveFontFamily}
+            fontFamily={`${effectiveFontFamily}, ${fallbackFont}`}
             fontSize={processedFontSize}
             fill={fillColor}
             stroke={strokeWidth > 0 ? strokeColor : 'none'}
@@ -578,6 +564,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
             style={{
               fontWeight: 'normal',
               userSelect: 'none',
+              fontFamily: `${effectiveFontFamily}, ${fallbackFont}`,
             }}
           >
             {line}

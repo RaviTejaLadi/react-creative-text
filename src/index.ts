@@ -8,7 +8,7 @@ export type {
   DirectionType,
   AnimationType,
   TextTransformType,
+  GoogleFontFamily,
 } from './components/CreativeText';
 
-export type { GoogleFontFamily } from './constants/googleFontFamilies';
 // #endregion CreativeText

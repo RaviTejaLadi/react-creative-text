@@ -8,8 +8,6 @@ const terser = require('@rollup/plugin-terser');
 const peerDepsExternal = require('rollup-plugin-peer-deps-external');
 const postcss = require('rollup-plugin-postcss');
 const autoprefixer = require('autoprefixer');
-const tailwindcss = require('tailwindcss');
-const tailwindConfig = require('./tailwind.config.cjs');
 const packageJson = require('./package.json');
 
 module.exports = {
@@ -26,7 +24,7 @@ module.exports = {
       exclude: ['**/*.test.tsx', '**/*.test.ts'],
     }),
     postcss({
-      plugins: [autoprefixer(), tailwindcss(tailwindConfig)],
+      plugins: [autoprefixer()],
       extract: true,
       extractPath: 'dist/index.css',
       modules: false,

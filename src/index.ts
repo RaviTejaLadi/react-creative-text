@@ -1,9 +1,11 @@
-import CreativeText from './components/CreativeText';
+// index.ts
+export { default as CreativeText } from './components/CreativeText';
+export type {
+  GoogleFontFamily,
+  DirectionType,
+  AnimationType,
+  TextTransformType,
+  CreativeTextProps,
+} from './components/CreativeText';
+
 import './index.css';
-
-// #region CreativeText
-export default CreativeText;
-
-export * from './components/CreativeText';
-
-// #endregion CreativeText

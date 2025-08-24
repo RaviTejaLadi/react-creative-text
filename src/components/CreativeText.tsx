@@ -78,6 +78,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
   opacity = 1,
   rotation = 0,
   skew = { x: 0, y: 0 },
+  textTransform = 'none',
 }) => {
   const [fontLoaded, setFontLoaded] = useState(false);
   const [fontError, setFontError] = useState(false);
@@ -521,6 +522,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         transform: getTransform(),
         opacity,
         fontFamily: `'${effectiveFontFamily}', ${fallbackFont}`,
+        textTransform: textTransform,
         ...style,
       }}
     >
@@ -565,6 +567,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
               fontWeight: 'normal',
               userSelect: 'none',
               fontFamily: `${effectiveFontFamily}, ${fallbackFont}`,
+              textTransform: textTransform,
             }}
           >
             {line}

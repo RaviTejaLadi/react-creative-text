@@ -79,6 +79,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
   rotation = 0,
   skew = { x: 0, y: 0 },
   textTransform = 'none',
+  ...props
 }) => {
   const [fontLoaded, setFontLoaded] = useState(false);
   const [fontError, setFontError] = useState(false);
@@ -525,6 +526,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
         textTransform: textTransform,
         ...style,
       }}
+      {...props}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

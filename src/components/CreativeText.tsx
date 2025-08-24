@@ -493,7 +493,7 @@ const CreativeText: React.FC<CreativeTextProps> = ({
     : fontLoaded
       ? fontFamily
       : fallbackFont;
-  console.log(effectiveFontFamily);
+
   const fillColor = gradient ? `url(#${gradientId})` : color;
   const filterValue = shadow ? `url(#${filterId})` : undefined;
 
